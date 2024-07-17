@@ -13,6 +13,8 @@ import java.util.List;
  * 游戏面板类，负责游戏的主要逻辑和绘制。
  */
 public class GamePanel extends JPanel implements ActionListener {
+    public static final int PANEL_WIDTH = 800; // 面板宽度
+    public static final int PANEL_HEIGHT = 600; // 面板高度
     private static final int PLAYER_START_X = 400; // 玩家起始x位置
     private static final int PLAYER_START_Y = 500; // 玩家起始y位置
     private static final int ENEMY_SPAWN_INTERVAL = 1000; // 敌人生成间隔（毫秒）
@@ -53,6 +55,8 @@ public class GamePanel extends JPanel implements ActionListener {
             CollisionHandler.handleCollisions(player, enemies, bullets, scoreManager); // 处理碰撞
             enemies.removeIf(enemy -> !enemy.isAlive()); // 移除死亡的敌人
             bullets.removeIf(bullet -> !bullet.isAlive()); // 移除消失的子弹
+        } else {
+            enemySpawnTimer.stop(); // 停止敌人生成计时器
         }
         repaint(); // 重新绘制面板
     }
@@ -76,7 +80,7 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     private void spawnEnemy() {
-        enemies.add(new Enemy((int) (Math.random() * 760), 0)); // 随机生成敌人位置
+        enemies.add(new Enemy((int) (Math.random() * (PANEL_WIDTH - 50)), 0)); // 随机生成敌人位置
     }
 
     private class GameKeyAdapter extends KeyAdapter {
@@ -102,6 +106,7 @@ public class GamePanel extends JPanel implements ActionListener {
             GamePanel newPanel = new GamePanel(); // 创建新的游戏面板
             frame.add(newPanel); // 添加新的游戏面板
             frame.validate(); // 重新验证组件
+            newPanel.requestFocusInWindow(); // 确保新面板获得键盘焦点
         }
     }
 }

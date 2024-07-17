@@ -3,16 +3,18 @@ package com.example.airplane;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.util.List;
+import java.util.List; // 确保使用 java.util.List
 import javax.swing.ImageIcon;
 
 /**
- * 玩家类，负责玩家飞机的属性、移动和发射子弹。
+ * 玩家飞机类，负责玩家飞机的属性、移动和绘制。
  */
 public class Player extends GameObject {
-    private int dx, dy; // 水平和垂直方向的移动量
-    private boolean alive = true; // 玩家存活状态
-    private final Image image; // 玩家飞机图片
+    private static final int MOVE_STEP = 5; // 玩家每次移动的步长
+
+    private int dx, dy; // 移动方向
+    private boolean alive = true; // 存活状态
+    private final Image image; // 玩家图片
 
     public Player(int startX, int startY) {
         x = startX; // 设置玩家初始x位置
@@ -24,8 +26,14 @@ public class Player extends GameObject {
 
     @Override
     public void move() {
-        x += dx; // 更新x位置
-        y += dy; // 更新y位置
+        x += dx; // 根据dx更新x位置
+        y += dy; // 根据dy更新y位置
+
+        // 限制玩家在面板内移动
+        if (x < 0) x = 0;
+        if (x > GamePanel.PANEL_WIDTH - width) x = GamePanel.PANEL_WIDTH - width;
+        if (y < 0) y = 0;
+        if (y > GamePanel.PANEL_HEIGHT - height) y = GamePanel.PANEL_HEIGHT - height;
     }
 
     @Override
@@ -42,19 +50,19 @@ public class Player extends GameObject {
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_LEFT -> dx = -1; // 左箭头键，向左移动
-                    case KeyEvent.VK_RIGHT -> dx = 1; // 右箭头键，向右移动
-                    case KeyEvent.VK_UP -> dy = -1; // 上箭头键，向上移动
-                    case KeyEvent.VK_DOWN -> dy = 1; // 下箭头键，向下移动
-                    case KeyEvent.VK_SPACE -> fire(bullets); // 空格键，发射子弹
+                    case KeyEvent.VK_LEFT -> dx = -MOVE_STEP;
+                    case KeyEvent.VK_RIGHT -> dx = MOVE_STEP;
+                    case KeyEvent.VK_UP -> dy = -MOVE_STEP;
+                    case KeyEvent.VK_DOWN -> dy = MOVE_STEP;
+                    case KeyEvent.VK_SPACE -> fire(bullets); // 发射子弹
                 }
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT -> dx = 0; // 停止水平移动
-                    case KeyEvent.VK_UP, KeyEvent.VK_DOWN -> dy = 0; // 停止垂直移动
+                    case KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT -> dx = 0;
+                    case KeyEvent.VK_UP, KeyEvent.VK_DOWN -> dy = 0;
                 }
             }
         };
@@ -65,6 +73,6 @@ public class Player extends GameObject {
     }
 
     public void setAlive(boolean alive) {
-        this.alive = alive; // 设置存活状态
+        this.alive = alive;
     }
 }
