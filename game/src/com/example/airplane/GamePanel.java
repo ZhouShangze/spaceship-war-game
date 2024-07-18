@@ -108,6 +108,7 @@ public class GamePanel extends JPanel implements ActionListener {
         g.drawString("Game Over", 350, 300); // 显示游戏结束
         g.drawString("Score: " + scoreManager.getScore(), 350, 320); // 显示分数
         g.drawString("Press R to Restart", 350, 340); // 提示重新开始
+        g.drawString("Press E to Exit", 350, 360); // 提示可以退出
     }
 
     /**
@@ -177,7 +178,7 @@ public class GamePanel extends JPanel implements ActionListener {
     }
 
     /**
-     * 处理按键事件，包括游戏重启功能。
+     * 处理按键事件，包括游戏重启与退出功能。
      */
     private class GameKeyAdapter extends KeyAdapter {
         @Override
@@ -186,6 +187,8 @@ public class GamePanel extends JPanel implements ActionListener {
                 player.getKeyAdapter(bullets).keyPressed(e); // 处理玩家按键事件
             } else if (e.getKeyCode() == KeyEvent.VK_R) {
                 restartGame(); // 处理重新开始游戏
+            } else if (e.getKeyCode() == KeyEvent.VK_E) {
+                exitGame();    // 处理退出开始游戏
             }
         }
 
@@ -228,4 +231,23 @@ public class GamePanel extends JPanel implements ActionListener {
         startButton.setVisible(false); // 隐藏开始游戏按钮
         requestFocusInWindow(); // 请求焦点，以便接收键盘事件
     }
+
+    /**
+     * 退出游戏，关闭窗口，并执行必要的清理工作。
+     */
+    public void exitGame() {
+        // 停止游戏中的计时器
+        if (enemySpawnTimer != null && enemySpawnTimer.isRunning()) {
+            enemySpawnTimer.stop();
+        }
+        // 清除游戏运行标志
+        gameRunning = false;
+        // 关闭窗口
+        Window window = SwingUtilities.getWindowAncestor(this);
+        if (window != null) {
+            window.dispose();
+            System.exit(0);    // 窗口关闭后退出程序
+        }
+    }
+
 }
