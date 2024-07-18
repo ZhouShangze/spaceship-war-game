@@ -4,37 +4,36 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.*;
+import java.net.Socket;
 
 /**
- * 多人游戏对话框类，用于创建或加入多人游戏房间。
- * 通过此对话框，用户可以输入服务器地址、用户名、密码和房间号。
+ * MultiplayerDialog 类表示一个用于多人游戏设置的对话框。
+ * 它允许用户输入服务器地址、用户名、密码和房间号，以加入或创建游戏。
  */
 public class MultiplayerDialog extends JDialog {
 
-    // 输入服务器地址的文本字段
-    private JTextField serverAddressField;
-    // 输入用户名的文本字段
-    private JTextField usernameField;
-    // 输入密码的密码字段
-    private JPasswordField passwordField;
-    // 输入房间号的文本字段
-    private JTextField roomNumberField;
+    private JTextField serverAddressField; // 服务器地址输入框
+    private JTextField usernameField; // 用户名输入框
+    private JPasswordField passwordField; // 密码输入框
+    private JTextField roomNumberField; // 房间号输入框
+    private Socket socket; // 套接字
+    private PrintWriter out; // 输出流
+    private BufferedReader in; // 输入流
 
     /**
      * 构造函数，初始化多人游戏对话框。
-     * @param owner 主对话框的拥有者，通常是一个 JFrame。
+     *
+     * @param owner 父窗口
      */
     public MultiplayerDialog(JFrame owner) {
-        // 初始化对话框，设置模态性和标题
-        super(owner, "Multiplayer Mode", true); // 模态对话框
+        super(owner, "Multiplayer Mode", true); // 初始化对话框，设置为模态
 
-        // 创建内容面板并设置其布局为网格布局
-        // 创建布局
+        // 创建内容面板并设置其布局
         JPanel contentPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        // 添加服务器地址标签和输入字段
-        // 服务器地址
+        // 服务器地址标签和输入框
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.EAST;
@@ -47,8 +46,7 @@ public class MultiplayerDialog extends JDialog {
         serverAddressField = new JTextField("127.0.0.1:8888");
         contentPane.add(serverAddressField, gbc);
 
-        // 添加用户名标签和输入字段
-        // 用户名
+        // 用户名标签和输入框
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.anchor = GridBagConstraints.EAST;
@@ -63,8 +61,7 @@ public class MultiplayerDialog extends JDialog {
         usernameField = new JTextField();
         contentPane.add(usernameField, gbc);
 
-        // 添加密码标签和输入字段
-        // 密码
+        // 密码标签和输入框
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.anchor = GridBagConstraints.EAST;
@@ -79,8 +76,7 @@ public class MultiplayerDialog extends JDialog {
         passwordField = new JPasswordField();
         contentPane.add(passwordField, gbc);
 
-        // 添加房间号标签和输入字段
-        // 房间号
+        // 房间号标签和输入框
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.anchor = GridBagConstraints.EAST;
@@ -95,7 +91,6 @@ public class MultiplayerDialog extends JDialog {
         roomNumberField = new JTextField();
         contentPane.add(roomNumberField, gbc);
 
-        // 创建按钮面板，用于放置“创建”和“加入”按钮
         // 按钮面板
         gbc.gridx = 0;
         gbc.gridy = 4;
@@ -107,62 +102,94 @@ public class MultiplayerDialog extends JDialog {
         JPanel buttonPanel = new JPanel();
         contentPane.add(buttonPanel, gbc);
 
-        // 创建“创建”和“加入”按钮
+        // 创建和加入按钮
         JButton createButton = new JButton("Create");
         JButton joinButton = new JButton("Join");
-
-        // 将按钮添加到按钮面板
-        // 添加按钮到面板
         buttonPanel.add(createButton);
         buttonPanel.add(joinButton);
 
-        // 设置对话框的模态排斥类型和关闭操作
-        // 设置对话框的默认关闭操作
-        setModalExclusionType(Dialog.ModalExclusionType.APPLICATION_EXCLUDE);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        setModalExclusionType(Dialog.ModalExclusionType.APPLICATION_EXCLUDE); // 设置对话框模态排斥类型
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE); // 设置默认关闭操作
 
-        // 设置内容面板、对话框大小和位置
-        // 设置内容面板
-        setContentPane(contentPane);
-        // 设置对话框大小
-        pack();
+        setContentPane(contentPane); // 设置内容面板
+        pack(); // 调整窗口大小
         setLocationRelativeTo(owner); // 居中显示
 
-        // 为“创建”按钮添加动作监听器，处理创建房间的逻辑
-        // 添加按钮监听器
+        // 创建按钮的动作监听器
         createButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // 获取并处理输入的服务器地址、用户名、密码和房间号
-                // 创建房间的逻辑
                 String serverAddress = serverAddressField.getText();
                 String username = usernameField.getText();
                 char[] passwordChars = passwordField.getPassword();
                 String password = new String(passwordChars);
                 String roomNumber = roomNumberField.getText();
-                // 处理这些数据...
-                dispose(); // 关闭对话框
+                connectToServer(serverAddress, username, password, roomNumber);
             }
         });
 
-        // 为“加入”按钮添加动作监听器，处理加入房间的逻辑
+        // 加入按钮的动作监听器
         joinButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // 获取并处理输入的服务器地址、用户名、密码和房间号
-                // 加入房间的逻辑
                 String serverAddress = serverAddressField.getText();
                 String username = usernameField.getText();
                 char[] passwordChars = passwordField.getPassword();
                 String password = new String(passwordChars);
                 String roomNumber = roomNumberField.getText();
-                // 处理这些数据...
-                dispose(); // 关闭对话框
+                connectToServer(serverAddress, username, password, roomNumber);
             }
         });
 
-        // 显示对话框
-        setVisible(true);
+        setVisible(true); // 显示对话框
+    }
+
+    /**
+     * 连接到服务器并发送加入房间的消息。
+     *
+     * @param serverAddress 服务器地址
+     * @param username      用户名
+     * @param password      密码
+     * @param roomNumber    房间号
+     */
+    private void connectToServer(String serverAddress, String username, String password, String roomNumber) {
+        try {
+            // 解析服务器地址和端口号
+            String[] addressParts = serverAddress.split(":");
+            String host = addressParts[0];
+            int port = Integer.parseInt(addressParts[1]);
+            socket = new Socket(host, port); // 创建套接字连接
+            out = new PrintWriter(socket.getOutputStream(), true); // 初始化输出流
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream())); // 初始化输入流
+
+            // 发送加入房间的消息
+            out.println("JOIN;" + serverAddress + ";" + username + ";" + password + ";" + roomNumber);
+
+            // 接收服务器响应
+            String response = in.readLine();
+            if ("SUCCESS".equals(response)) {
+                dispose(); // 关闭对话框
+                startGameClient(username); // 启动游戏客户端
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to join/create room", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * 启动游戏客户端。
+     *
+     * @param username 用户名
+     */
+    private void startGameClient(String username) {
+        JFrame gameFrame = new JFrame("Multiplayer Game");
+        MultiplayerGamePanel MgamePanel = new MultiplayerGamePanel(username, socket, in, out);
+        gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        gameFrame.setSize(800, 600);
+        gameFrame.add(MgamePanel);
+        gameFrame.setVisible(true);
+        MgamePanel.startGame();
     }
 }
-
