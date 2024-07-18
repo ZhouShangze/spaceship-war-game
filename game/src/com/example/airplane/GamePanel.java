@@ -21,46 +21,88 @@ public class GamePanel extends JPanel implements ActionListener {
     private static final int TIMER_DELAY = 10; // 游戏主计时器延迟（毫秒）
 
     private final Timer timer = new Timer(TIMER_DELAY, this); // 游戏主计时器
-    private final Timer enemySpawnTimer = new Timer(ENEMY_SPAWN_INTERVAL, e -> spawnEnemy()); // 敌人生成计时器
-    private final Player player = new Player(PLAYER_START_X, PLAYER_START_Y); // 玩家对象
+    private Player player = new Player(PLAYER_START_X, PLAYER_START_Y); // 玩家对象
     private final List<Enemy> enemies = new ArrayList<>(); // 敌人列表
     private final List<Bullet> bullets = new ArrayList<>(); // 子弹列表
     private final ScoreManager scoreManager = new ScoreManager(); // 分数管理器
+    private Timer enemySpawnTimer; // 敌人生成计时器
+
+    private boolean gameRunning; // 游戏运行状态标志
+
+    private JButton startButton; // 开始游戏按钮
 
     public GamePanel() {
         setFocusable(true); // 设置面板可以获得键盘焦点
         setBackground(Color.BLACK); // 设置背景颜色
         addKeyListener(new GameKeyAdapter()); // 添加键盘事件监听器
-        timer.start(); // 启动游戏主计时器
-        enemySpawnTimer.start(); // 启动敌人生成计时器
+        initUI(); // 初始化界面元素
+        initGame(); // 初始化游戏设置
     }
 
+    /**
+     * 初始化界面元素，包括开始游戏按钮。
+     */
+    private void initUI() {
+        setLayout(new BorderLayout());
+
+        startButton = new JButton("Start Game");
+        startButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                startGame(); // 点击按钮开始游戏
+            }
+        });
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.add(startButton);
+
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    /**
+     * 初始化游戏设置，包括启动游戏主计时器和敌人生成计时器。
+     */
+    private void initGame() {
+
+        gameRunning = true;
+        timer.start(); // 启动游戏主计时器
+        startEnemySpawnTimer(); // 启动敌人生成计时器
+    }
+
+    /**
+     * 启动敌人生成计时器，定期生成敌人。
+     */
+    private void startEnemySpawnTimer() {
+        enemySpawnTimer = new Timer(ENEMY_SPAWN_INTERVAL, e -> spawnEnemy());
+        enemySpawnTimer.start();
+    }
+
+    /**
+     * 停止敌人生成计时器。
+     */
+    private void stopEnemySpawnTimer() {
+        if (enemySpawnTimer != null) {
+            enemySpawnTimer.stop();
+        }
+    }
+
+    /**
+     * 绘制游戏界面，包括玩家、敌人、子弹以及分数显示。
+     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); // 调用父类的绘制方法
         if (player.isAlive()) {
             player.draw(g); // 绘制玩家
+            drawGameObjects(g); // 绘制游戏中的所有对象
         } else {
             drawGameOverScreen(g); // 绘制游戏结束屏幕
         }
-        drawGameObjects(g); // 绘制游戏中的所有对象
     }
 
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (player.isAlive()) {
-            player.move(); // 移动玩家
-            enemies.forEach(Enemy::move); // 移动所有敌人
-            bullets.forEach(Bullet::move); // 移动所有子弹
-            CollisionHandler.handleCollisions(player, enemies, bullets, scoreManager); // 处理碰撞
-            enemies.removeIf(enemy -> !enemy.isAlive()); // 移除死亡的敌人
-            bullets.removeIf(bullet -> !bullet.isAlive()); // 移除消失的子弹
-        } else {
-            enemySpawnTimer.stop(); // 停止敌人生成计时器
-        }
-        repaint(); // 重新绘制面板
-    }
-
+    /**
+     * 绘制游戏结束屏幕，显示游戏结束文字、分数和重新开始提示。
+     */
     private void drawGameOverScreen(Graphics g) {
         g.setColor(Color.RED); // 设置游戏结束文字颜色
         g.drawString("Game Over", 350, 300); // 显示游戏结束
@@ -68,6 +110,9 @@ public class GamePanel extends JPanel implements ActionListener {
         g.drawString("Press R to Restart", 350, 340); // 提示重新开始
     }
 
+    /**
+     * 绘制游戏中的所有对象，包括敌人、子弹和分数显示。
+     */
     private void drawGameObjects(Graphics g) {
         for (Enemy enemy : enemies) {
             enemy.draw(g); // 绘制敌人
@@ -79,10 +124,61 @@ public class GamePanel extends JPanel implements ActionListener {
         g.drawString("Score: " + scoreManager.getScore(), 10, 10); // 显示当前分数
     }
 
+    /**
+     * 生成敌人，随机位置。
+     */
     private void spawnEnemy() {
-        enemies.add(new Enemy((int) (Math.random() * (PANEL_WIDTH - 50)), 0)); // 随机生成敌人位置
+        if (gameRunning) {
+            enemies.add(new Enemy((int) (Math.random() * (PANEL_WIDTH - 50)), 0)); // 随机生成敌人位置
+        }
     }
 
+    /**
+     * 处理游戏逻辑，包括玩家移动、敌人移动、碰撞检测和对象清理。
+     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (player.isAlive()) {
+            player.move(); // 移动玩家
+            enemies.forEach(Enemy::move); // 移动所有敌人
+            bullets.forEach(Bullet::move); // 移动所有子弹
+            handleCollisions(); // 处理碰撞
+            removeDeadObjects(); // 移除死亡的敌人和子弹
+        } else {
+            stopGame(); // 游戏结束时停止游戏逻辑
+        }
+        repaint(); // 重新绘制面板
+    }
+
+    /**
+     * 处理碰撞检测，包括玩家与敌人碰撞以及子弹与敌人碰撞。
+     */
+    private void handleCollisions() {
+        for (Enemy enemy : new ArrayList<>(enemies)) {
+            if (player.getBounds().intersects(enemy.getBounds())) {
+                player.setAlive(false); // 玩家与敌人碰撞，玩家死亡
+            }
+            for (Bullet bullet : new ArrayList<>(bullets)) {
+                if (bullet.getBounds().intersects(enemy.getBounds())) {
+                    bullet.setAlive(false); // 子弹与敌人碰撞，子弹消失
+                    enemy.setAlive(false); // 敌人死亡
+                    scoreManager.incrementScore(); // 增加分数
+                }
+            }
+        }
+    }
+
+    /**
+     * 移除死亡的敌人和子弹。
+     */
+    private void removeDeadObjects() {
+        enemies.removeIf(enemy -> !enemy.isAlive()); // 移除死亡的敌人
+        bullets.removeIf(bullet -> !bullet.isAlive()); // 移除消失的子弹
+    }
+
+    /**
+     * 处理按键事件，包括游戏重启功能。
+     */
     private class GameKeyAdapter extends KeyAdapter {
         @Override
         public void keyPressed(KeyEvent e) {
@@ -100,13 +196,36 @@ public class GamePanel extends JPanel implements ActionListener {
             }
         }
 
-        private void restartGame() {
-            JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(GamePanel.this);
-            frame.remove(GamePanel.this); // 移除当前游戏面板
-            GamePanel newPanel = new GamePanel(); // 创建新的游戏面板
-            frame.add(newPanel); // 添加新的游戏面板
-            frame.validate(); // 重新验证组件
-            newPanel.requestFocusInWindow(); // 确保新面板获得键盘焦点
-        }
+    }
+
+    /**
+     * 重新开始游戏，重置游戏状态并重新启动游戏相关的计时器和定时器。
+     */
+    private void restartGame() {
+        player.setAlive(true); // 玩家复活
+        enemies.clear(); // 清空敌人列表
+        bullets.clear(); // 清空子弹列表
+        scoreManager.resetScore(); // 重置分数
+        player = new Player(PLAYER_START_X, PLAYER_START_Y);
+        initGame(); // 重新初始化游戏设置
+    }
+
+    /**
+     * 停止游戏，包括停止计时器和敌人生成。
+     */
+    private void stopGame() {
+        gameRunning = false;
+        timer.stop(); // 停止游戏主计时器
+        stopEnemySpawnTimer(); // 停止敌人生成计时器
+    }
+
+    /**
+     * 启动游戏，包括设置游戏运行标志和重新启动敌人生成计时器。
+     */
+    public void startGame() {
+        gameRunning = true;
+        startEnemySpawnTimer(); // 重新启动敌人生成计时器
+        startButton.setVisible(false); // 隐藏开始游戏按钮
+        requestFocusInWindow(); // 请求焦点，以便接收键盘事件
     }
 }

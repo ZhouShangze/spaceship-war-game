@@ -16,6 +16,14 @@ public class Player extends GameObject {
     private boolean alive = true; // 存活状态
     private final Image image; // 玩家图片
 
+    public void setDx(int dx) {  //控制x轴移动方向
+        this.dx = dx;
+    }
+
+    public void setDy(int dy) {  //控制Y轴移动方向
+        this.dy = dy;
+    }
+
     public Player(int startX, int startY) {
         x = startX; // 设置玩家初始x位置
         y = startY; // 设置玩家初始y位置
