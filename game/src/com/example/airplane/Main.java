@@ -30,7 +30,7 @@ public class Main extends JFrame{
         panel.add(startButton);
 
         JButton multiplayerButton = new JButton("多人模式");
-        multiplayerButton.addActionListener(e -> startGame());  // 添加按钮点击事件监听器
+        multiplayerButton.addActionListener(e -> multiplayerstartGame());  // 添加按钮点击事件监听器
         panel.add(multiplayerButton);
 
         JButton exitButton = new JButton("退出");
@@ -55,6 +55,24 @@ public class Main extends JFrame{
         gamePanel.requestFocusInWindow(); // 确保游戏面板获得键盘焦点
         gamePanel.startGame(); // 启动游戏相关计时器和定时器
     }
+
+    /**
+     * 开始多人游戏的界面初始化方法。
+     * 该方法用于设置多人游戏开始时的用户界面，提供创建房间和加入房间的功能选项。
+     * 当用户点击相应按钮时，会弹出多人游戏对话框，允许用户进行进一步的操作。
+     */
+    /**
+     * 开始多人游戏的界面初始化方法。
+     * 直接弹出创建房间的对话框。
+     */
+    private static void multiplayerstartGame() {
+        // 直接实例化并显示创建和加入房间的对话框
+        MultiplayerDialog dialog = new MultiplayerDialog(frame);
+        dialog.setVisible(true); //可视化
+    }
+
+
+
 
     /**
      * 退出游戏，关闭窗口，并执行必要的清理工作。
