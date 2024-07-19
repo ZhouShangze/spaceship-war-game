@@ -1,4 +1,4 @@
-package com.example.airplane.GameObject;
+package src.com.ex.airplane.GameObject;
 
 import java.awt.*;
 import javax.swing.ImageIcon;
@@ -14,7 +14,7 @@ public class Bullet extends GameObject {
         this.y = y; // 设置子弹初始y位置
         width = 5; // 设置子弹宽度
         height = 10; // 设置子弹高度
-        image = new ImageIcon(getClass().getResource("/resources/bullet.png")).getImage(); // 加载子弹图片
+        image = new ImageIcon(getClass().getResource("/src/resources/bullet.png")).getImage(); // 加载子弹图片
     }
 
     @Override

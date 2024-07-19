@@ -1,4 +1,4 @@
-package com.example.airplane;
+package src.com.ex.airplane;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

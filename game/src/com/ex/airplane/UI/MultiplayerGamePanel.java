@@ -1,4 +1,4 @@
-package com.example.airplane.UI;
+package src.com.ex.airplane.UI;
 
 import javax.swing.*;
 import java.awt.*;

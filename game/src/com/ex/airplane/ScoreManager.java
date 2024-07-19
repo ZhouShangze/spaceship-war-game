@@ -1,4 +1,4 @@
-package com.example.airplane;
+package src.com.ex.airplane;
 
 /**
  * 分数管理类，负责游戏分数的增加和获取。

@@ -1,8 +1,8 @@
-package com.example.airplane;
+package src.com.ex.airplane;
 
-import com.example.airplane.GameObject.GameObject;
-import com.example.airplane.UI.GamePanel;
-import com.example.airplane.GameObject.Bullet;
+import src.com.ex.airplane.GameObject.GameObject;
+import src.com.ex.airplane.UI.GamePanel;
+import src.com.ex.airplane.GameObject.Bullet;
 
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -33,7 +33,7 @@ public class Player extends GameObject {
         y = startY; // 设置玩家初始y位置
         width = 50; // 设置玩家宽度
         height = 50; // 设置玩家高度
-        image = new ImageIcon(getClass().getResource("/resources/player.png")).getImage(); // 加载玩家图片
+        image = new ImageIcon(getClass().getResource("/src/resources/player.png")).getImage(); // 加载玩家图片
     }
 
     @Override

@@ -1,4 +1,4 @@
-package com.example.airplane.GameObject;
+package src.com.ex.airplane.GameObject;
 
 import java.awt.*;
 import javax.swing.ImageIcon;
@@ -14,7 +14,7 @@ public class Enemy extends GameObject {
         this.y = y; // 设置敌机初始y位置
         width = 50; // 设置敌机宽度
         height = 50; // 设置敌机高度
-        image = new ImageIcon(getClass().getResource("/resources/enemy.png")).getImage(); // 加载敌机图片
+        image = new ImageIcon(getClass().getResource("/src/resources/enemy.png")).getImage(); // 加载敌机图片
     }
 
     @Override

@@ -1,8 +1,8 @@
-package com.example.airplane;
+package src.com.ex.airplane;
 
-import com.example.airplane.GameObject.Bullet;
-import com.example.airplane.GameObject.Enemy;
-import com.example.airplane.GameObject.Reward;
+import src.com.ex.airplane.GameObject.Bullet;
+import src.com.ex.airplane.GameObject.Enemy;
+import src.com.ex.airplane.GameObject.Reward;
 
 import java.util.List;
 

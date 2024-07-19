@@ -1,7 +1,7 @@
-package com.example.airplane;
+package game.src.com.ex.airplane;
 
-import com.example.airplane.UI.GamePanel;
-import com.example.airplane.UI.MultiplayerDialog;
+import src.com.ex.airplane.UI.GamePanel;
+import src.com.ex.airplane.UI.MultiplayerDialog;
 
 import javax.swing.*;
 

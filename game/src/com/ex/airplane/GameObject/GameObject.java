@@ -1,4 +1,4 @@
-package com.example.airplane.GameObject;
+package src.com.ex.airplane.GameObject;
 
 import java.awt.*;
 

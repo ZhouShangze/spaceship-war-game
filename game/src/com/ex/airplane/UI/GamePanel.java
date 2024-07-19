@@ -1,11 +1,11 @@
-package com.example.airplane.UI;
+package src.com.ex.airplane.UI;
 
-import com.example.airplane.GameObject.Bullet;
-import com.example.airplane.GameObject.Enemy;
-import com.example.airplane.GameObject.Reward;
-import com.example.airplane.Player;
-import com.example.airplane.ScoreManager;
-import com.example.airplane.CollisionHandler;
+import src.com.ex.airplane.GameObject.Bullet;
+import src.com.ex.airplane.GameObject.Enemy;
+import src.com.ex.airplane.GameObject.Reward;
+import src.com.ex.airplane.Player;
+import src.com.ex.airplane.ScoreManager;
+import src.com.ex.airplane.CollisionHandler;
 
 import javax.swing.*;
 import java.awt.*;

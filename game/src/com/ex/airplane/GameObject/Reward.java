@@ -1,6 +1,6 @@
-package com.example.airplane.GameObject;
+package src.com.ex.airplane.GameObject;
 
-import com.example.airplane.UI.GamePanel;
+import src.com.ex.airplane.UI.GamePanel;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
