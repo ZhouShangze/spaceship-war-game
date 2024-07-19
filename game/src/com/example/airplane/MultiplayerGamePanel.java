@@ -8,15 +8,27 @@ import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+/**
+ * MultiplayerGamePanel 类表示多人游戏模式下的游戏面板。
+ * 它处理与服务器的通信并显示游戏状态。
+ */
 public class MultiplayerGamePanel extends GamePanel {
 
-    private String username; // 用户名
-    private Socket socket; // 套接字
-    private BufferedReader in; // 输入流
-    private PrintWriter out; // 输出流
+    private final String username; // 用户名
+    private final Socket socket; // 套接字
+    private final BufferedReader in; // 输入流
+    private final PrintWriter out; // 输出流
     private String[] players; // 玩家列表
     private Timer timer; // 定时器
 
+    /**
+     * 构造函数，初始化多人游戏面板。
+     *
+     * @param username 用户名
+     * @param socket   套接字
+     * @param in       输入流
+     * @param out      输出流
+     */
     public MultiplayerGamePanel(String username, Socket socket, BufferedReader in, PrintWriter out) {
         super(); // 调用 GamePanel 的构造函数
         this.username = username;
@@ -38,7 +50,8 @@ public class MultiplayerGamePanel extends GamePanel {
         });
         add(startButton); // 将按钮添加到面板
 
-        timer = new Timer(100, new ActionListener() { // 初始化定时器
+        // 初始化定时器，处理服务器消息
+        timer = new Timer(100, new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
@@ -52,6 +65,12 @@ public class MultiplayerGamePanel extends GamePanel {
                             newPlayers[players.length] = newUser;
                             players = newPlayers; // 更新玩家列表
                             repaint(); // 重新绘制面板
+                        } else if ("GAME_STARTING".equals(parts[0])) {
+                            // 处理游戏即将开始的逻辑
+                            displayCountdown();
+                        } else if ("GAME_STARTED".equals(parts[0])) {
+                            // 处理游戏开始的逻辑
+                            startGame();
                         }
                     }
                 } catch (Exception ex) {
@@ -85,14 +104,35 @@ public class MultiplayerGamePanel extends GamePanel {
         }
     }
 
+    /**
+     * 显示3秒倒计时。
+     */
+    private void displayCountdown() {
+        // 创建一个新的线程来显示倒计时，以避免阻塞主线程
+        new Thread(() -> {
+            for (int i = 3; i > 0; i--) {
+                System.out.println("游戏将在 " + i + " 秒后开始...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            // 通知游戏开始
+            out.println("GAME_STARTED;" + username);
+        }).start();
+    }
+
+    /**
+     * 开始游戏的逻辑。
+     */
+    @Override
     public void startGame() {
         // 游戏开始的逻辑
-        // 这里可以调用 GamePanel 中的游戏开始逻辑，如果有的话
         super.startGame();
 
         if (timer != null && timer.isRunning()) {
             timer.stop(); // 停止定时器
         }
     }
-
 }

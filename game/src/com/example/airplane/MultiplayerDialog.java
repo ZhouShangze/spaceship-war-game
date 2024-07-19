@@ -37,7 +37,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.EAST;
-        contentPane.add(new JLabel("Server Address:"), gbc);
+        contentPane.add(new JLabel("服务器地址:"), gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -52,7 +52,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.anchor = GridBagConstraints.EAST;
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0.0;
-        contentPane.add(new JLabel("Username:"), gbc);
+        contentPane.add(new JLabel("用户名:"), gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -67,7 +67,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.anchor = GridBagConstraints.EAST;
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0.0;
-        contentPane.add(new JLabel("Password:"), gbc);
+        contentPane.add(new JLabel("密码:"), gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -82,7 +82,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.anchor = GridBagConstraints.EAST;
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0.0;
-        contentPane.add(new JLabel("Room Number:"), gbc);
+        contentPane.add(new JLabel("房间号:"), gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -99,97 +99,78 @@ public class MultiplayerDialog extends JDialog {
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
         gbc.insets = new Insets(5, 5, 5, 5);
-        JPanel buttonPanel = new JPanel();
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton joinButton = new JButton("加入游戏");
+        JButton cancelButton = new JButton("取消");
+        buttonPanel.add(joinButton);
+        buttonPanel.add(cancelButton);
         contentPane.add(buttonPanel, gbc);
 
-        // 创建和加入按钮
-        JButton createButton = new JButton("Create");
-        JButton joinButton = new JButton("Join");
-        buttonPanel.add(createButton);
-        buttonPanel.add(joinButton);
+        // 设置内容面板
+        setContentPane(contentPane);
+        pack();
+        setLocationRelativeTo(owner);
 
-        setModalExclusionType(Dialog.ModalExclusionType.APPLICATION_EXCLUDE); // 设置对话框模态排斥类型
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE); // 设置默认关闭操作
-
-        setContentPane(contentPane); // 设置内容面板
-        pack(); // 调整窗口大小
-        setLocationRelativeTo(owner); // 居中显示
-
-        // 创建按钮的动作监听器
-        createButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String serverAddress = serverAddressField.getText();
-                String username = usernameField.getText();
-                char[] passwordChars = passwordField.getPassword();
-                String password = new String(passwordChars);
-                String roomNumber = roomNumberField.getText();
-                connectToServer(serverAddress, username, password, roomNumber);
-            }
-        });
-
-        // 加入按钮的动作监听器
+        // 加入游戏按钮的事件处理
         joinButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String serverAddress = serverAddressField.getText();
                 String username = usernameField.getText();
-                char[] passwordChars = passwordField.getPassword();
-                String password = new String(passwordChars);
+                String password = new String(passwordField.getPassword());
                 String roomNumber = roomNumberField.getText();
-                connectToServer(serverAddress, username, password, roomNumber);
+
+                // 检查输入是否为空
+                if (serverAddress.isEmpty() || username.isEmpty() || password.isEmpty() || roomNumber.isEmpty()) {
+                    JOptionPane.showMessageDialog(MultiplayerDialog.this, "请填写所有字段。", "错误", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // 连接服务器
+                try {
+                    String[] addressParts = serverAddress.split(":");
+                    String host = addressParts[0];
+                    int port = Integer.parseInt(addressParts[1]);
+                    socket = new Socket(host, port);
+                    out = new PrintWriter(socket.getOutputStream(), true);
+                    in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                    // 发送加入房间的消息
+                    out.println("JOIN;USERNAME;" + username + ";PASSWORD;" + password + ";ROOM;" + roomNumber);
+
+                    // 读取服务器的响应
+                    String response = in.readLine();
+                    if ("SUCCESS".equals(response)) {
+                        // 连接成功，关闭对话框，打开游戏面板
+                        dispose();
+                        SwingUtilities.invokeLater(new Runnable() {
+                            @Override
+                            public void run() {
+                                JFrame frame = new JFrame("多人游戏 - " + username);
+                                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                                frame.setContentPane(new MultiplayerGamePanel(username, socket, in, out));
+                                frame.setSize(800, 600);
+                                frame.setVisible(true);
+                            }
+                        });
+                    } else {
+                        // 连接失败，显示错误消息
+                        JOptionPane.showMessageDialog(MultiplayerDialog.this, "无法加入房间: " + response, "错误", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(MultiplayerDialog.this, "无法连接到服务器。", "错误", JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
-        setVisible(true); // 显示对话框
-    }
-
-    /**
-     * 连接到服务器并发送加入房间的消息。
-     *
-     * @param serverAddress 服务器地址
-     * @param username      用户名
-     * @param password      密码
-     * @param roomNumber    房间号
-     */
-    private void connectToServer(String serverAddress, String username, String password, String roomNumber) {
-        try {
-            // 解析服务器地址和端口号
-            String[] addressParts = serverAddress.split(":");
-            String host = addressParts[0];
-            int port = Integer.parseInt(addressParts[1]);
-            socket = new Socket(host, port); // 创建套接字连接
-            out = new PrintWriter(socket.getOutputStream(), true); // 初始化输出流
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream())); // 初始化输入流
-
-            // 发送加入房间的消息
-            out.println("JOIN;" + serverAddress + ";" + username + ";" + password + ";" + roomNumber);
-
-            // 接收服务器响应
-            String response = in.readLine();
-            if ("SUCCESS".equals(response)) {
+        // 取消按钮的事件处理
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
                 dispose(); // 关闭对话框
-                startGameClient(username); // 启动游戏客户端
-            } else {
-                JOptionPane.showMessageDialog(this, "Failed to join/create room", "Error", JOptionPane.ERROR_MESSAGE);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 启动游戏客户端。
-     *
-     * @param username 用户名
-     */
-    private void startGameClient(String username) {
-        JFrame gameFrame = new JFrame("Multiplayer Game");
-        MultiplayerGamePanel MgamePanel = new MultiplayerGamePanel(username, socket, in, out);
-        gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        gameFrame.setSize(800, 600);
-        gameFrame.add(MgamePanel);
-        gameFrame.setVisible(true);
-        MgamePanel.startGame();
+        });
     }
 }
+
