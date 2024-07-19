@@ -9,83 +9,18 @@
   <artifactId>example-proj</artifactId>
   <version>1.0.0</version>
 
-  <name>Example Project</name>
-  <description>This is an example Maven project.</description>
-  <url>http://www.example.com/</url>
-
-  <licenses>   <!-- 许可证 -->
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
-
-  <developers>     <!-- 开发者信息 -->
-    <developer>
-      <id>developer1</id>
-      <name>Developer One</name>
-      <email>developer1@example.com</email>
-      <organization>Example Organizations Inc.</organization>
-      <organizationUrl>http://www.example-organizations.com/</organizationUrl>
-      <roles>
-        <role>developer</role>
-      </roles>
-      <timezone>-5</timezone>
-    </developer>
-  </developers>
 
   <dependencies>  <!-- 依赖项 -->
-
     <dependency>
         <groupId>org.xerial</groupId>
         <artifactId>sqlite-jdbc</artifactId>
         <version>3.46.0.0</version>
     </dependency>
-    <dependency>
-        <groupId>ch.qos.logback</groupId>
-        <artifactId>logback-classic</artifactId>
-        <version>1.2.3</version>
-    </dependency>
-    <dependency>
-        <groupId>org.slf4j</groupId>
-        <artifactId>slf4j-api</artifactId>
-        <version>1.7.30</version>
-    </dependency>
 
   </dependencies>
 
   <build>   <!-- 项目构建 -->
-    <sourceDirectory>./</sourceDirectory>
-
-    <resources>
-      <resource>
-        <directory>./game/src/resources</directory>  <!-- 这里填你的resource目录-->
-      </resource>
-    </resources>
-
     <plugins>   <!-- 插件配置 -->
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.8.1</version>
-        <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.2.0</version>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-              <mainClass>com.example.App</mainClass>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -94,6 +29,21 @@
           <target>14</target>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>3.2.0</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>com.example.airplane.Main</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 </project>
