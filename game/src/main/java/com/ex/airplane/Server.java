@@ -30,12 +30,10 @@ public class Server {
                     executor.execute(new Handler(socket, conn)); // 为每个客户端连接创建一个新的Handler线程
                 }
             } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Database error: " + e.getMessage()); // 记录数据库错误
-                e.printStackTrace(); // 打印异常堆栈信息
+                logger.log(Level.SEVERE, "Database error: " + e.getMessage(), e); // 记录数据库错误
             }
         } catch (IOException | ClassNotFoundException e) {
-            logger.log(Level.SEVERE, "Server exception: " + e.getMessage()); // 记录服务器异常日志
-            e.printStackTrace(); // 打印异常堆栈信息
+            logger.log(Level.SEVERE, "Server exception: " + e.getMessage(), e); // 记录服务器异常日志
         }
     }
 
@@ -90,22 +88,20 @@ public class Server {
                 }
 
                 String command = parts[0]; // 消息命令
-                String serverAddress = parts[1]; // 服务器地址
                 String username = parts[2]; // 用户名
                 String password = parts[3]; // 密码
                 this.room = parts[4]; // 房间名
 
-
                 // 根据命令处理不同的请求
                 switch (command) {
                     case "CREATE":
-                        handleCreateRoom(username, password);
+                        handleCreateRoom(username, password); // 处理创建房间请求
                         break;
                     case "JOIN":
-                        handleJoinRoom(username, password);
+                        handleJoinRoom(username, password); // 处理加入房间请求
                         break;
                     default:
-                        out.println("ERROR;Unknown command");
+                        out.println("ERROR;Unknown command"); // 未知命令
                         return;
                 }
 
@@ -120,22 +116,9 @@ public class Server {
                     broadcastMessage(room, input);
                 }
             } catch (IOException e) {
-                logger.log(Level.WARNING, "IO exception handling client: " + e.getMessage()); // 记录处理客户端时的IO异常
+                logger.log(Level.WARNING, "IO exception handling client: " + e.getMessage(), e); // 记录处理客户端时的IO异常
             } finally {
-                // 在finally块中确保资源被正确释放
-                synchronized (rooms) {
-                    if (out != null && room != null) {
-                        rooms.get(room).remove(out); // 从房间中移除客户端的输出流
-                        if (rooms.get(room).isEmpty()) {
-                            rooms.remove(room); // 如果房间为空，则删除房间
-                        }
-                    }
-                }
-                try {
-                    socket.close(); // 关闭套接字
-                } catch (IOException e) {
-                    logger.log(Level.WARNING, "Error closing socket: " + e.getMessage()); // 记录关闭套接字时的异常
-                }
+                closeResources(); // 确保资源被正确释放
             }
         }
 
@@ -147,7 +130,7 @@ public class Server {
          */
         private void handleCreateRoom(String username, String password) {
             try {
-                if (validateUser(username, password)) {
+                if (validateUser(username, password)) { // 验证用户
                     synchronized (rooms) {
                         if (rooms.containsKey(room)) {
                             out.println("ERROR;Room already exists"); // 如果房间已存在，向客户端发送错误消息
@@ -160,7 +143,7 @@ public class Server {
                     out.println("ERROR;Invalid username or password"); // 如果用户名或密码无效，向客户端发送错误消息
                 }
             } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Database error: " + e.getMessage()); // 记录数据库错误
+                logger.log(Level.SEVERE, "Database error: " + e.getMessage(), e); // 记录数据库错误
                 out.println("ERROR;Database error");
             }
         }
@@ -173,7 +156,7 @@ public class Server {
          */
         private void handleJoinRoom(String username, String password) {
             try {
-                if (validateUser(username, password)) {
+                if (validateUser(username, password)) { // 验证用户
                     synchronized (rooms) {
                         if (!rooms.containsKey(room)) {
                             out.println("ERROR;Room does not exist"); // 如果房间不存在，向客户端发送错误消息
@@ -185,7 +168,7 @@ public class Server {
                     out.println("ERROR;Invalid username or password"); // 如果用户名或密码无效，向客户端发送错误消息
                 }
             } catch (SQLException e) {
-                logger.log(Level.SEVERE, "Database error: " + e.getMessage()); // 记录数据库错误
+                logger.log(Level.SEVERE, "Database error: " + e.getMessage(), e); // 记录数据库错误
                 out.println("ERROR;Database error");
             }
         }
@@ -212,13 +195,40 @@ public class Server {
             }
         }
 
-        // 向指定房间内的所有客户端广播消息
+        /**
+         * 向指定房间内的所有客户端广播消息
+         *
+         * @param room 房间名
+         * @param message 消息内容
+         */
         private void broadcastMessage(String room, String message) {
             Set<PrintWriter> writers = rooms.get(room);
             if (writers != null) {
                 for (PrintWriter writer : writers) {
                     writer.println(message); // 向每个客户端发送消息
                 }
+            }
+        }
+
+        /**
+         * 关闭资源，确保连接正确关闭
+         */
+        private void closeResources() {
+            synchronized (rooms) {
+                if (out != null && room != null) {
+                    Set<PrintWriter> writers = rooms.get(room);
+                    if (writers != null) {
+                        writers.remove(out);
+                        if (writers.isEmpty()) {
+                            rooms.remove(room); // 如果房间为空，则删除房间
+                        }
+                    }
+                }
+            }
+            try {
+                socket.close(); // 关闭套接字
+            } catch (IOException e) {
+                logger.log(Level.WARNING, "Error closing socket: " + e.getMessage(), e); // 记录关闭套接字时的异常
             }
         }
     }
