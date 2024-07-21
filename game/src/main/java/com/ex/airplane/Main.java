@@ -8,7 +8,7 @@ import javax.swing.*;
 /**
  * 游戏的主入口类，包括主界面和游戏启动逻辑。
  */
-public class Main extends JFrame{
+public class    Main extends JFrame{
     private static JFrame frame; // 主界面窗口
 
     public static void main(String[] args) {

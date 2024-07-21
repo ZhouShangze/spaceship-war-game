@@ -90,9 +90,11 @@ public class Server {
                 }
 
                 String command = parts[0]; // 消息命令
+                String serverAddress = parts[1]; // 服务器地址
                 String username = parts[2]; // 用户名
                 String password = parts[3]; // 密码
                 this.room = parts[4]; // 房间名
+
 
                 // 根据命令处理不同的请求
                 switch (command) {
@@ -124,6 +126,9 @@ public class Server {
                 synchronized (rooms) {
                     if (out != null && room != null) {
                         rooms.get(room).remove(out); // 从房间中移除客户端的输出流
+                        if (rooms.get(room).isEmpty()) {
+                            rooms.remove(room); // 如果房间为空，则删除房间
+                        }
                     }
                 }
                 try {

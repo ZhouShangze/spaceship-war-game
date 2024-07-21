@@ -209,30 +209,29 @@ public class MultiplayerDialog extends JDialog {
 
             // 接收服务器响应
             String response = in.readLine();
-            if ("SUCCESS".equals(response)) {
+            if (response.startsWith("ERROR;")) {
+                // 处理错误消息
+                String errorMessage = response.substring("ERROR;".length());
+                JOptionPane.showMessageDialog(this, "错误: " + errorMessage, "错误", JOptionPane.ERROR_MESSAGE);
+                return;
+            } else if ("SUCCESS".equals(response)) {
                 dispose(); // 关闭对话框
                 startGameClient(username); // 启动游戏客户端
             } else {
-                JOptionPane.showMessageDialog(this, "无法加入/创建房间", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "未知的服务器响应: " + response, "错误", JOptionPane.ERROR_MESSAGE);
             }
         } catch (IOException e) {
-            JOptionPane.showMessageDialog(this, "无法连接到服务器", "错误", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "连接服务器失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     /**
-     * 启动游戏客户端。
+     * 启动游戏客户端并进行进一步的设置。
      *
      * @param username 用户名
      */
     private void startGameClient(String username) {
-        JFrame gameFrame = new JFrame("星际空战——多人模式");
-        MultiplayerGamePanel gamePanel = new MultiplayerGamePanel(username, socket, in, out);
-        gameFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        gameFrame.setSize(800, 600);
-        gameFrame.add(gamePanel);
-        gameFrame.setVisible(true);
-        gamePanel.startGame();
+        // 启动游戏客户端逻辑
+        // 例如，可以创建一个新的窗口来显示游戏画面
     }
 }
