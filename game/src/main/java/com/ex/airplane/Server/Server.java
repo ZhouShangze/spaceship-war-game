@@ -1,5 +1,12 @@
 package com.ex.airplane.Server;
 
+import com.ex.airplane.GameObject.Bullet;
+import com.ex.airplane.GameObject.Enemy;
+import com.ex.airplane.GameObject.Reward;
+import com.ex.airplane.CollisionHandler;
+import com.ex.airplane.ScoreManager;
+import com.ex.airplane.multiplayer.MultiPlayer;
+
 import java.io.*;
 import java.net.*;
 import java.sql.*;
@@ -10,10 +17,7 @@ import java.util.logging.*;
 public class Server {
     private static final int PORT = 8888; // 服务器端口
     private static final String DB_URL = "jdbc:sqlite:game.db"; // 数据库 URL
-
-    // 在Printwriter里面加player信息
-
-    private static final ConcurrentHashMap<String, Set<PrintWriter>> rooms = new ConcurrentHashMap<>(); // 房间列表
+    private static final ConcurrentHashMap<String, GameRoom> rooms = new ConcurrentHashMap<>(); // 房间列表
     private static final ExecutorService executor = Executors.newFixedThreadPool(10); // 线程池
     private static final Logger logger = Logger.getLogger(Server.class.getName()); // 日志记录器
 
@@ -40,12 +44,6 @@ public class Server {
         }
     }
 
-    /**
-     * 创建数据库表（如果尚不存在）。
-     *
-     * @param conn 数据库连接
-     * @throws SQLException 如果数据库操作失败
-     */
     private static void createTables(Connection conn) throws SQLException {
         String createUsersTableSQL = "CREATE TABLE IF NOT EXISTS users (" +
                 "username TEXT PRIMARY KEY," +
@@ -56,15 +54,13 @@ public class Server {
         }
     }
 
-    /**
-     * Handler 类表示一个处理客户端连接的线程。
-     */
     private static class Handler implements Runnable {
         private final Socket socket; // 客户端套接字
         private final Connection dbConnection; // 数据库连接
         private PrintWriter out; // 客户端输出流
         private BufferedReader in; // 客户端输入流
         private String room; // 客户端所在的房间
+        private MultiPlayer player; // 当前客户端玩家对象
 
         public Handler(Socket socket, Connection dbConnection) {
             this.socket = socket;
@@ -95,7 +91,6 @@ public class Server {
                 String password = parts[3]; // 密码
                 this.room = parts[4]; // 房间名
 
-                // 根据命令处理不同的请求
                 switch (command) {
                     case "CREATE":
                         handleCreateRoom(username, password); // 处理创建房间请求
@@ -113,6 +108,13 @@ public class Server {
                 // 向房间内的所有客户端广播新用户加入的消息
                 broadcastMessage(room, "NEW_USER;" + username);
 
+                // 将玩家对象添加到房间，并更新房间状态
+                GameRoom gameRoom = rooms.get(room);
+                if (gameRoom != null) {
+                    player = new MultiPlayer(generateRandomX(), generateRandomY(), username, 0);
+                    gameRoom.addPlayer(player);
+                }
+
                 // 循环读取客户端发送的消息，并广播到房间内
                 String input;
                 while ((input = in.readLine()) != null) {
@@ -125,12 +127,6 @@ public class Server {
             }
         }
 
-        /**
-         * 处理创建房间的请求。
-         *
-         * @param username 用户名
-         * @param password 密码
-         */
         private void handleCreateRoom(String username, String password) {
             try {
                 if (validateUser(username, password)) { // 验证用户
@@ -138,8 +134,10 @@ public class Server {
                         if (rooms.containsKey(room)) {
                             out.println("ERROR;Room already exists"); // 如果房间已存在，向客户端发送错误消息
                         } else {
-                            rooms.put(room, ConcurrentHashMap.newKeySet()); // 创建新房间
-                            rooms.get(room).add(out); // 添加客户端的输出流到房间
+                            GameRoom newRoom = new GameRoom(room);
+                            rooms.put(room, newRoom); // 创建新房间
+                            newRoom.startGame(); // 开始游戏
+                            out.println("SUCCESS;Room created and game started"); // 通知客户端房间创建成功并开始游戏
                         }
                     }
                 } else {
@@ -151,20 +149,16 @@ public class Server {
             }
         }
 
-        /**
-         * 处理加入房间的请求。
-         *
-         * @param username 用户名
-         * @param password 密码
-         */
         private void handleJoinRoom(String username, String password) {
             try {
                 if (validateUser(username, password)) { // 验证用户
                     synchronized (rooms) {
-                        if (!rooms.containsKey(room)) {
+                        GameRoom gameRoom = rooms.get(room);
+                        if (gameRoom == null) {
                             out.println("ERROR;Room does not exist"); // 如果房间不存在，向客户端发送错误消息
                         } else {
-                            rooms.get(room).add(out); // 将客户端添加到房间
+                            player = new MultiPlayer(generateRandomX(), generateRandomY(), username, 0);
+                            gameRoom.addPlayer(player); // 将客户端添加到房间
                         }
                     }
                 } else {
@@ -176,14 +170,6 @@ public class Server {
             }
         }
 
-        /**
-         * 验证用户的用户名和密码是否有效。
-         *
-         * @param username 用户名
-         * @param password 密码
-         * @return 如果验证成功返回 true，否则返回 false
-         * @throws SQLException 如果数据库操作失败
-         */
         private boolean validateUser(String username, String password) throws SQLException {
             String query = "SELECT password FROM users WHERE username = ?";
             try (PreparedStatement stmt = dbConnection.prepareStatement(query)) {
@@ -198,31 +184,20 @@ public class Server {
             }
         }
 
-        /**
-         * 向指定房间内的所有客户端广播消息
-         *
-         * @param room 房间名
-         * @param message 消息内容
-         */
         private void broadcastMessage(String room, String message) {
-            Set<PrintWriter> writers = rooms.get(room);
-            if (writers != null) {
-                for (PrintWriter writer : writers) {
-                    writer.println(message); // 向每个客户端发送消息
-                }
+            GameRoom gameRoom = rooms.get(room);
+            if (gameRoom != null) {
+                gameRoom.broadcast(message); // 向房间内的所有客户端广播消息
             }
         }
 
-        /**
-         * 关闭资源，确保连接正确关闭
-         */
         private void closeResources() {
             synchronized (rooms) {
-                if (out != null && room != null) {
-                    Set<PrintWriter> writers = rooms.get(room);
-                    if (writers != null) {
-                        writers.remove(out);
-                        if (writers.isEmpty()) {
+                if (player != null && room != null) {
+                    GameRoom gameRoom = rooms.get(room);
+                    if (gameRoom != null) {
+                        gameRoom.removePlayer(player);
+                        if (gameRoom.isEmpty()) {
                             rooms.remove(room); // 如果房间为空，则删除房间
                         }
                     }
@@ -233,6 +208,14 @@ public class Server {
             } catch (IOException e) {
                 logger.log(Level.WARNING, "Error closing socket: " + e.getMessage(), e); // 记录关闭套接字时的异常
             }
+        }
+
+        private int generateRandomX() {
+            return new Random().nextInt(800); // 随机生成 x 坐标（假设屏幕宽度为 800）
+        }
+
+        private int generateRandomY() {
+            return new Random().nextInt(600); // 随机生成 y 坐标（假设屏幕高度为 600）
         }
     }
 }

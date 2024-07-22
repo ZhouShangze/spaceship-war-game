@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * 游戏面板类，负责游戏的主要逻辑和绘制。
  */
-public class BaseGamePanel extends JPanel implements ActionListener {
+public class BaseGamePanel extends JPanel implements ActionListener {  //供多人游戏面板继承
     public static final int PANEL_WIDTH = 800; // 面板宽度
     public static final int PANEL_HEIGHT = 600; // 面板高度
     private static final int PLAYER_START_X = 400; // 玩家起始x位置
