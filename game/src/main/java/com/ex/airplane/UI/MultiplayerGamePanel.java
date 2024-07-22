@@ -12,9 +12,9 @@ import java.net.Socket;
  * MultiplayerGamePanel 类表示多人游戏模式下的游戏面板。
  * 它处理与服务器的通信并显示游戏状态。
  */
-public class MultiplayerGamePanel extends GamePanel {
+public class MultiplayerGamePanel extends BaseGamePanel {
 
-    private final String username; // 用户名
+     // 用户名
     private final Socket socket; // 套接字
     private final BufferedReader in; // 输入流
     private final PrintWriter out; // 输出流
@@ -30,8 +30,7 @@ public class MultiplayerGamePanel extends GamePanel {
      * @param out      输出流
      */
     public MultiplayerGamePanel(String username, Socket socket, BufferedReader in, PrintWriter out) {
-        super(); // 调用 GamePanel 的构造函数
-        this.username = username;
+        super(username); // 调用 MultiplayerGamePanel 的构造函数
         this.socket = socket;
         this.in = in;
         this.out = out;

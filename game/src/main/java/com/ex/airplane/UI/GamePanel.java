@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 游戏面板类，负责游戏的主要逻辑和绘制。
+ * 游戏面板类，负责游戏的主要逻辑和绘制。(供单机用)
  */
 public class GamePanel extends JPanel implements ActionListener {
     public static final int PANEL_WIDTH = 800; // 面板宽度
@@ -33,6 +33,7 @@ public class GamePanel extends JPanel implements ActionListener {
     private final List<Enemy> enemies = new ArrayList<>(); // 敌人列表
     private final List<Bullet> bullets = new ArrayList<>(); // 子弹列表
     private final List<Reward> rewards = new ArrayList<>(); // 奖励列表
+
     private final ScoreManager scoreManager = new ScoreManager(); // 分数管理器
     private Timer enemySpawnTimer; // 敌人生成计时器
     private Timer rewardSpawnTimer; // 奖励生成计时器

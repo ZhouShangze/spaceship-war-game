@@ -57,7 +57,7 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>com.example.airplane.Main</mainClass>
+              <mainClass>com.ex.airplane.Main</mainClass>
             </manifest>
           </archive>
         </configuration>
