@@ -21,6 +21,7 @@ public class MultiplayerDialog extends JDialog {
     private PrintWriter out; // 输出流
     private BufferedReader in; // 输入流
 
+    private JFrame frame;
     /**
      * 构造函数，初始化多人游戏对话框。
      *
@@ -28,6 +29,8 @@ public class MultiplayerDialog extends JDialog {
      */
     public MultiplayerDialog(JFrame owner) {
         super(owner, "Multiplayer Mode", true); // 初始化对话框，设置为模态
+
+        this.frame = owner;
 
         // 创建内容面板并设置其布局
         JPanel contentPane = new JPanel(new GridBagLayout());
@@ -59,6 +62,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.weightx = 1.0;
         gbc.insets = new Insets(5, 5, 5, 5);
         usernameField = new JTextField();
+        usernameField.setText("user1");
         contentPane.add(usernameField, gbc);
 
         // 密码标签和输入框
@@ -74,6 +78,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.weightx = 1.0;
         gbc.insets = new Insets(5, 5, 5, 5);
         passwordField = new JPasswordField();
+        passwordField.setText("123456"); //方便调试
         contentPane.add(passwordField, gbc);
 
         // 房间号标签和输入框
@@ -89,6 +94,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.weightx = 1.0;
         gbc.insets = new Insets(5, 5, 5, 5);
         roomNumberField = new JTextField();
+        roomNumberField.setText("666");
         contentPane.add(roomNumberField, gbc);
 
         // 按钮面板
@@ -144,8 +150,6 @@ public class MultiplayerDialog extends JDialog {
                 }
             }
         });
-
-        setVisible(true); // 显示对话框
     }
 
     /**
@@ -213,7 +217,7 @@ public class MultiplayerDialog extends JDialog {
                 // 处理错误消息
                 String errorMessage = response.substring("ERROR;".length());
                 JOptionPane.showMessageDialog(this, "错误: " + errorMessage, "错误", JOptionPane.ERROR_MESSAGE);
-                return;
+
             } else if ("SUCCESS".equals(response)) {
                 dispose(); // 关闭对话框
                 startGameClient(username); // 启动游戏客户端
@@ -231,7 +235,23 @@ public class MultiplayerDialog extends JDialog {
      * @param username 用户名
      */
     private void startGameClient(String username) {
+        dispose();
+
         // 启动游戏客户端逻辑
         // 例如，可以创建一个新的窗口来显示游戏画面
+        MultiplayerGamePanel panel = new MultiplayerGamePanel(username,socket,in,out);
+        panel.setVisible(true);
+
+
+        frame.getContentPane().removeAll(); // 清除之前的内容
+
+        frame.add(panel); // 添加游戏面板
+
+        frame.setSize(800, 600); // 设置游戏界面尺寸
+        frame.setVisible(true); // 显示游戏界面
+
+        panel.requestFocusInWindow(); // 确保游戏面板获得键盘焦点
+        panel.startGame(); // 启动游戏相关计时器和定时器
+
     }
 }

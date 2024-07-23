@@ -2,24 +2,24 @@ package com.ex.airplane.GameObject;
 
 import com.ex.airplane.UI.GamePanel;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
 
 /**
  * 奖励类，用于表示游戏中的奖励对象。
  */
-public class Reward {
+public class Reward extends GameObject{
     private static final int WIDTH = 20; // 奖励宽度
     private static final int HEIGHT = 20; // 奖励高度
-    private static final Color COLOR = Color.YELLOW; // 奖励颜色
-
-    private int x; // 奖励的x位置
-    private int y; // 奖励的y位置
-    private boolean alive = true; // 奖励是否存在
+    private final Image image; // 敌机图片
 
     public Reward(int x, int y) {
         this.x = x;
         this.y = y;
+        image = new ImageIcon(getClass().getResource("/reward.png")).getImage();
+        this.width = WIDTH;
+        this.height = HEIGHT;
     }
 
     /**
@@ -28,8 +28,7 @@ public class Reward {
      */
     public void draw(Graphics g) {
         if (alive) {
-            g.setColor(COLOR);
-            g.fillRect(x, y, WIDTH, HEIGHT); // 绘制奖励矩形
+            g.drawImage(image, x, y, width, height, null); // 绘制奖励
         }
     }
 
@@ -59,21 +58,5 @@ public class Reward {
      */
     public Rectangle getBounds() {
         return new Rectangle(x, y, WIDTH, HEIGHT);
-    }
-
-    /**
-     * 判断奖励是否存在。
-     * @return 是否存在
-     */
-    public boolean isAlive() {
-        return alive;
-    }
-
-    /**
-     * 设置奖励的存在状态。
-     * @param alive 是否存在
-     */
-    public void setAlive(boolean alive) {
-        this.alive = alive;
     }
 }

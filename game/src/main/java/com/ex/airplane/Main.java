@@ -8,7 +8,7 @@ import javax.swing.*;
 /**
  * 游戏的主入口类，包括主界面和游戏启动逻辑。
  */
-public class    Main extends JFrame{
+public class Main extends JFrame{
     private static JFrame frame; // 主界面窗口
 
     public static void main(String[] args) {
@@ -26,6 +26,7 @@ public class    Main extends JFrame{
         JPanel panel = new JPanel();
         frame.getContentPane().removeAll(); // 清除之前的内容
         frame.add(panel);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         JButton startButton = new JButton("单人模式");
         startButton.addActionListener(e -> startGame()); // 添加按钮点击事件监听器

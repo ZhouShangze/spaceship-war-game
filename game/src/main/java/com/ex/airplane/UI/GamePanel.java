@@ -138,6 +138,15 @@ public class GamePanel extends JPanel implements ActionListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); // 调用父类的绘制方法
+
+        // 画星空背景
+        g.setColor(Color.WHITE);
+        for (int i = 0; i < 100; i++) {
+            int x = (int) (Math.random() * getWidth());
+            int y = (int) (Math.random() * getHeight());
+            g.drawLine(x, y, x, y);
+        }
+
         if (player.isAlive()) {
             player.draw(g); // 绘制玩家
             drawGameObjects(g); // 绘制游戏中的所有对象

@@ -1,20 +1,17 @@
 package com.ex.airplane;
 
 import javax.sound.sampled.*;
-import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 
-public class AudioPlayer { // 音频播放器
+public class AudioPlayer {  //音效播放
     private Clip clip;
 
-    public AudioPlayer(String filePath) {
+    public AudioPlayer(URL url) {
         try {
-            // 打开音频输入流
-            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(new File(filePath));
-            // 获取音频格式和数据
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(url);
             AudioFormat format = audioInputStream.getFormat();
             DataLine.Info info = new DataLine.Info(Clip.class, format);
-            // 打开音频剪辑并加载样本数据
             clip = (Clip) AudioSystem.getLine(info);
             clip.open(audioInputStream);
         } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
@@ -22,26 +19,22 @@ public class AudioPlayer { // 音频播放器
         }
     }
 
-    public void play() {
+    public void play() {    //播放音效
         if (clip != null) {
             clip.start();
         }
     }
 
-    public void stop() {
+    public void stop() {  //停止音效
         if (clip != null) {
             clip.stop();
+            clip.setFramePosition(0); //重置
         }
     }
 
-    public void loop(int count) {
+    public void loop(int count) {  //循环播放
         if (clip != null) {
             clip.loop(count);
         }
-    }
-
-    public static void main(String[] args) {
-        AudioPlayer player = new AudioPlayer("path/to/your/soundfile.wav");
-        player.play();
     }
 }

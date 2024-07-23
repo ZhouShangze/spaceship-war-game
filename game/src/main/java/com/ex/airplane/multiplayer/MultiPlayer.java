@@ -55,14 +55,21 @@ public class MultiPlayer extends GameObject {
         return dy;
     }
 
-    public MultiPlayer(int startX, int startY, String username, int score) {
+    public MultiPlayer(int startX, int startY, String username, int score, boolean alive) {
         this.username = username;
         this.score = score;
+        this.alive = alive;
+
         x = startX; // 设置玩家初始x位置
         y = startY; // 设置玩家初始y位置
         width = 50; // 设置玩家宽度
         height = 50; // 设置玩家高度
         image = new ImageIcon(getClass().getResource("/player.png")).getImage(); // 加载玩家图片
+    }
+    public MultiPlayer(int startX, int startY, String username, int score) {
+        this(startX,startY,username,score,true);
+
+
     }
 
     @Override
@@ -79,12 +86,15 @@ public class MultiPlayer extends GameObject {
 
     @Override
     public void draw(Graphics g) {
-        g.drawImage(image, x, y, width, height, null); // 绘制玩家图片
-        g.drawString(username, x, y+10); // 绘制玩家图片
+        if(isAlive()) {
+            g.drawImage(image, x, y, width, height, null); // 绘制玩家图片
+            g.setColor(Color.BLUE);
+            g.drawString(username, x, y - 5); // 绘制玩家图片
+        }
     }
 
-    public void fire(List<Bullet> bullets) {
-        bullets.add(new Bullet(x + width / 2 - 2, y)); // 创建并添加子弹
+    public void fire(String username,List<Bullet> bullets) {
+        bullets.add(new Bullet(username,x + width / 2 - 2, y)); // 创建并添加子弹
     }
 
     public KeyAdapter getKeyAdapter(List<Bullet> bullets) {
@@ -92,11 +102,11 @@ public class MultiPlayer extends GameObject {
             @Override
             public void keyPressed(KeyEvent e) {
                 switch (e.getKeyCode()) {
-                    case KeyEvent.VK_LEFT -> dx = -MOVE_STEP;
-                    case KeyEvent.VK_RIGHT -> dx = MOVE_STEP;
-                    case KeyEvent.VK_UP -> dy = -MOVE_STEP;
-                    case KeyEvent.VK_DOWN -> dy = MOVE_STEP;
-                    case KeyEvent.VK_SPACE -> fire(bullets); // 发射子弹
+                    case KeyEvent.VK_LEFT  -> {dx = -MOVE_STEP; move();}
+                    case KeyEvent.VK_RIGHT -> {dx =  MOVE_STEP; move();}
+                    case KeyEvent.VK_UP    -> {dy = -MOVE_STEP; move();}
+                    case KeyEvent.VK_DOWN  -> {dy =  MOVE_STEP; move();}
+                    case KeyEvent.VK_SPACE -> fire(username,bullets); // 发射子弹
                 }
             }
 
@@ -104,7 +114,7 @@ public class MultiPlayer extends GameObject {
             public void keyReleased(KeyEvent e) {
                 switch (e.getKeyCode()) {
                     case KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT -> dx = 0;
-                    case KeyEvent.VK_UP, KeyEvent.VK_DOWN -> dy = 0;
+                    case KeyEvent.VK_UP,   KeyEvent.VK_DOWN  -> dy = 0;
                 }
             }
         };
