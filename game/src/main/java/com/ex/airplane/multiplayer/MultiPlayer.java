@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 玩家飞机类，负责玩家飞机的属性、移动和绘制。
@@ -64,7 +65,7 @@ public class MultiPlayer extends GameObject {
         y = startY; // 设置玩家初始y位置
         width = 50; // 设置玩家宽度
         height = 50; // 设置玩家高度
-        image = new ImageIcon(getClass().getResource("/player.png")).getImage(); // 加载玩家图片
+        image = new ImageIcon(Objects.requireNonNull(getClass().getResource("/player.png"))).getImage(); // 加载玩家图片
     }
     public MultiPlayer(int startX, int startY, String username, int score) {
         this(startX,startY,username,score,true);
