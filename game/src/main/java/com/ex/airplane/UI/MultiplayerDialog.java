@@ -32,6 +32,8 @@ public class MultiplayerDialog extends JDialog {
 
         this.frame = owner;
 
+        this.frame = owner;
+
         // 创建内容面板并设置其布局
         JPanel contentPane = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
