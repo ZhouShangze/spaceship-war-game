@@ -6,6 +6,22 @@ import java.awt.*;
  * 游戏对象的抽象类，提供基本属性和方法。
  */
 public abstract class GameObject {
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
     protected int x, y, width, height; // 位置和尺寸
     protected boolean alive = true; // 存活状态
 

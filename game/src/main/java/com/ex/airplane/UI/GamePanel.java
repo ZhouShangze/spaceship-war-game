@@ -1,5 +1,6 @@
 package com.ex.airplane.UI;
 
+import com.ex.airplane.AudioPlayer;
 import com.ex.airplane.GameObject.Bullet;
 import com.ex.airplane.GameObject.Enemy;
 import com.ex.airplane.GameObject.Reward;
@@ -7,6 +8,7 @@ import com.ex.airplane.Player;
 import com.ex.airplane.ScoreManager;
 import com.ex.airplane.CollisionHandler;
 
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -42,7 +44,11 @@ public class GamePanel extends JPanel implements ActionListener {
 
     private JButton startButton; // 开始游戏按钮
 
-    public GamePanel() {
+    private AudioPlayer backgroundMusic; // 背景音乐
+
+
+    public GamePanel() { // 构造函数
+        backgroundMusic = new AudioPlayer(getClass().getResource("/BGM.wav"));// 初始化背景音乐
         setFocusable(true); // 设置面板可以获得键盘焦点
         setBackground(Color.BLACK); // 设置背景颜色
         addKeyListener(new GameKeyAdapter()); // 添加键盘事件监听器
@@ -78,6 +84,7 @@ public class GamePanel extends JPanel implements ActionListener {
         timer.start(); // 启动游戏主计时器
         startEnemySpawnTimer(); // 启动敌人生成计时器
         startRewardSpawnTimer(); // 启动奖励生成计时器
+        backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY); // 启动背景音乐(循环)
     }
 
     /**
@@ -138,6 +145,15 @@ public class GamePanel extends JPanel implements ActionListener {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g); // 调用父类的绘制方法
+
+        // 画星空背景
+        g.setColor(Color.WHITE);
+        for (int i = 0; i < 100; i++) {
+            int x = (int) (Math.random() * getWidth());
+            int y = (int) (Math.random() * getHeight());
+            g.drawLine(x, y, x, y);
+        }
+
         if (player.isAlive()) {
             player.draw(g); // 绘制玩家
             drawGameObjects(g); // 绘制游戏中的所有对象
@@ -249,6 +265,7 @@ public class GamePanel extends JPanel implements ActionListener {
         timer.stop(); // 停止游戏主计时器
         stopEnemySpawnTimer(); // 停止敌人生成计时器
         stopRewardSpawnTimer(); // 停止奖励生成计时器
+        backgroundMusic.stop(); // 停止背景音乐
     }
 
     /**

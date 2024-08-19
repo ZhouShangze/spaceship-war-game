@@ -1,2 +1,4 @@
 # game
-plane demo
+spaceship-fighting game demo 0.9
+
+

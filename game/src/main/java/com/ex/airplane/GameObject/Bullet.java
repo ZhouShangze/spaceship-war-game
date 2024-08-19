@@ -9,6 +9,16 @@ import javax.swing.ImageIcon;
 public class Bullet extends GameObject {
     private final Image image; // 子弹图片
 
+
+    //哪个玩家的子弹
+    private String username;
+
+    public Bullet(String username,int x, int y) {
+        this(x,y);
+
+        this.username = username;
+    }
+
     public Bullet(int x, int y) {
         this.x = x; // 设置子弹初始x位置
         this.y = y; // 设置子弹初始y位置
@@ -26,5 +36,14 @@ public class Bullet extends GameObject {
     @Override
     public void draw(Graphics g) {
         g.drawImage(image, x, y, width, height, null); // 绘制子弹图片
+    }
+
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

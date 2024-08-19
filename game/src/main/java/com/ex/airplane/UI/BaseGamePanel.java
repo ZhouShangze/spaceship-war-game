@@ -1,63 +1,62 @@
 package com.ex.airplane.UI;
 
+import com.ex.airplane.AudioPlayer;
 import com.ex.airplane.GameObject.Bullet;
 import com.ex.airplane.GameObject.Enemy;
 import com.ex.airplane.GameObject.Reward;
 import com.ex.airplane.ScoreManager;
 import com.ex.airplane.CollisionHandler;
 import com.ex.airplane.multiplayer.MultiPlayer;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Vector;
+import java.util.ArrayList;
+import java.io.File;
 
 /**
  * 游戏面板类，负责游戏的主要逻辑和绘制。
  */
-public class BaseGamePanel extends JPanel implements ActionListener {  //供多人游戏面板继承
+public class BaseGamePanel extends JPanel implements ActionListener {
+    private JButton exportButton; // 导出最终成绩按钮
+    private AudioPlayer backgroundMusic;// 背景音乐
     public static final int PANEL_WIDTH = 800; // 面板宽度
     public static final int PANEL_HEIGHT = 600; // 面板高度
     private static final int PLAYER_START_X = 400; // 玩家起始x位置
     private static final int PLAYER_START_Y = 500; // 玩家起始y位置
     private static final int ENEMY_SPAWN_INTERVAL = 1000; // 敌人生成间隔（毫秒）
     private static final int REWARD_SPAWN_INTERVAL = 5000; // 奖励生成间隔（毫秒）
-    private static final int TIMER_DELAY = 10; // 游戏主计时器延迟（毫秒）
 
-    private final Timer timer = new Timer(TIMER_DELAY, this); // 游戏主计时器
+    protected final Vector<Enemy> enemies = new Vector<>(); // 敌人列表
+    protected final Vector<Bullet> bullets = new Vector<>(); // 子弹列表
+    protected final Vector<Reward> rewards = new Vector<>(); // 奖励列表
 
-    private final List<Enemy> enemies = new ArrayList<>(); // 敌人列表
-    private final List<Bullet> bullets = new ArrayList<>(); // 子弹列表
-    private final List<Reward> rewards = new ArrayList<>(); // 奖励列表
-
-
-
-    private final List<MultiPlayer> players = new ArrayList<>(); // 玩家列表
+    protected final Vector<MultiPlayer> players = new Vector<>(); // 玩家列表
 
     protected final String username; //用户名
 
-
-    private final ScoreManager scoreManager = new ScoreManager(); // 分数管理器
-    private Timer enemySpawnTimer; // 敌人生成计时器
-    private Timer rewardSpawnTimer; // 奖励生成计时器
-
-    private boolean gameRunning; // 游戏运行状态标志
-
-    private JButton startButton; // 开始游戏按钮
-
     public BaseGamePanel(String username) { // 构造函数
+        backgroundMusic = new AudioPlayer(getClass().getResource("/BGM.wav"));// 初始化背景音乐
         this.username = username;
         setFocusable(true); // 设置面板可以获得键盘焦点
         setBackground(Color.BLACK); // 设置背景颜色
-        addKeyListener(new GameKeyAdapter()); // 添加键盘事件监听器
+
         initUI(); // 初始化界面元素
-        initGame(); // 初始化游戏设置
+
     }
 
-    public boolean isMeAlive() {
+    public synchronized boolean isMeAlive() {
         for (MultiPlayer player : players){
             if (player.isAlive() && player.getUsername().equals(username)){
                 return true;
@@ -66,10 +65,17 @@ public class BaseGamePanel extends JPanel implements ActionListener {  //供多�
         return false;
     }
 
-    public void parseGameObjects(String notifiedGameObjects){ // 解析服务器发来的游戏对象
+
+
+    public synchronized void parseGameObjects(String notifiedGameObjects){ // 解析服务器发来的游戏对象
+        final Vector<Enemy> enemies = new Vector<>(); // 敌人列表
+        final Vector<Bullet> bullets = new Vector<>(); // 子弹列表
+        final Vector<Reward> rewards = new Vector<>(); // 奖励列表
+        Vector<MultiPlayer> players = new Vector<>(); // 玩家列表
+
         //player,username,x1,y2,score,alive;player,username,x1,y2,score,alive;enemy,x1,y2;reward,x1,y2;bullet:x1,y2;
-        String[] gameObjects = notifiedGameObjects.split(";");
-        for (String gameObject : gameObjects){
+        String[] gameObjects = notifiedGameObjects.split(";");   // 分割字符串
+        for (String gameObject : gameObjects){   // 遍历游戏对象列表
             if (gameObject.startsWith("player,")){
                 String[] playerInfo = gameObject.split(",");
                 String username = playerInfo[1];
@@ -77,7 +83,8 @@ public class BaseGamePanel extends JPanel implements ActionListener {  //供多�
                 int y = Integer.parseInt(playerInfo[3]);
                 int score = Integer.parseInt(playerInfo[4]);
                 boolean alive = Boolean.parseBoolean(playerInfo[5]);
-                players.add(new MultiPlayer(x,y,username,score));
+
+                players.add(new MultiPlayer(x,y,username,score, alive));
            }else if (gameObject.startsWith("enemy,")){
                 String[] enemyInfo = gameObject.split(",");
                 int x = Integer.parseInt(enemyInfo[1]);
@@ -96,6 +103,17 @@ public class BaseGamePanel extends JPanel implements ActionListener {  //供多�
                 bullets.add(new Bullet(x,y));
             }
         }
+
+
+        this.players.clear();
+        this.enemies.clear();
+        this.rewards.clear();
+        this.bullets.clear();
+
+        this.players.addAll(players);
+        this.enemies.addAll(enemies);
+        this.rewards.addAll(rewards);
+        this.bullets.addAll(bullets);
     }
 
     /**
@@ -103,89 +121,27 @@ public class BaseGamePanel extends JPanel implements ActionListener {  //供多�
      */
     private void initUI() {
         setLayout(new BorderLayout());
-
-        startButton = new JButton("Start Game");
-        startButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                startGame(); // 点击按钮开始游戏
-            }
-        });
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(startButton);
-
-        add(buttonPanel, BorderLayout.SOUTH);
     }
 
-    /**
-     * 初始化游戏设置，包括启动游戏主计时器和敌人生成计时器。
-     */
-    private void initGame() {
-        gameRunning = true;
-        timer.start(); // 启动游戏主计时器
-        startEnemySpawnTimer(); // 启动敌人生成计时器
-        startRewardSpawnTimer(); // 启动奖励生成计时器
-    }
-
-    /**
-     * 启动敌人生成计时器，定期生成敌人。
-     */
-    private void startEnemySpawnTimer() {
-        enemySpawnTimer = new Timer(ENEMY_SPAWN_INTERVAL, e -> spawnEnemy());
-        enemySpawnTimer.start();
-    }
-
-    /**
-     * 停止敌人生成计时器。
-     */
-    private void stopEnemySpawnTimer() {
-        if (enemySpawnTimer != null) {
-            enemySpawnTimer.stop();
-        }
-    }
-
-    /**
-     * 启动奖励生成计时器，定期生成奖励。
-     */
-    private void startRewardSpawnTimer() {
-        rewardSpawnTimer = new Timer(REWARD_SPAWN_INTERVAL, e -> spawnReward());
-        rewardSpawnTimer.start();
-    }
-
-    /**
-     * 停止奖励生成计时器。
-     */
-    private void stopRewardSpawnTimer() {
-        if (rewardSpawnTimer != null) {
-            rewardSpawnTimer.stop();
-        }
-    }
-
-    /**
-     * 生成敌人，随机位置。
-     */
-    private void spawnEnemy() {
-        if (gameRunning) {
-            enemies.add(new Enemy((int) (Math.random() * (PANEL_WIDTH - 50)), 0)); // 随机生成敌人位置
-        }
-    }
-
-    /**
-     * 生成奖励，随机位置。
-     */
-    private void spawnReward() {
-        if (gameRunning) {
-            rewards.add(new Reward((int) (Math.random() * (PANEL_WIDTH - 50)), 0)); // 随机生成奖励位置
-        }
-    }
 
     /**
      * 绘制游戏界面，包括玩家、敌人、子弹、奖励以及分数显示。
      */
     @Override
-    protected void paintComponent(Graphics g) {
+    protected synchronized void paintComponent(Graphics g) {
         super.paintComponent(g); // 调用父类的绘制方法
+
+        g.setColor(Color.BLACK);
+        g.fillRect(0,0,getWidth(),getHeight());
+
+        // 画星空背景
+        g.setColor(Color.WHITE);
+        for (int i = 0; i < 100; i++) {
+            int x = (int) (Math.random() * getWidth());
+            int y = (int) (Math.random() * getHeight());
+            g.drawLine(x, y, x, y);
+        }
+
         int aliveaccount = 0; // 存活玩家数量
         for (MultiPlayer player : players) {
             if (player.isAlive()) {
@@ -193,28 +149,110 @@ public class BaseGamePanel extends JPanel implements ActionListener {  //供多�
                 player.draw(g); // 绘制玩家
             }
         }
-        if (aliveaccount == 0) {
+
+
+        if (aliveaccount == 0) {   // 如果没有玩家存活，则显示游戏结束屏幕
             drawGameOverScreen(g); // 绘制游戏结束屏幕
+            backgroundMusic.stop(); // 停止背景音乐
+            exportButton.setVisible(true);
         }else {
             drawGameObjects(g); // 绘制游戏中的所有对象
         }
     }
 
     /**
-     * 绘制游戏结束屏幕，显示游戏结束文字、分数和重新开始提示。
+     * 绘制游戏结束屏幕，显示游戏结束文字、分数
      */
-    private void drawGameOverScreen(Graphics g) {
+    private synchronized void drawGameOverScreen(Graphics g) {  // 绘制游戏结束屏幕
         g.setColor(Color.RED); // 设置游戏结束文字颜色
-        g.drawString("Game Over", 350, 300); // 显示游戏结束
-        g.drawString("Score: " + scoreManager.getScore(), 350, 320); // 显示分数
-        g.drawString("Press R to Restart", 350, 340); // 提示重新开始
-        g.drawString("Press E to Exit", 350, 360); // 提示可以退出
+        g.drawString("Game Over", 300, 200); // 显示游戏结束
+
+        int deltaY = 30;
+
+        //按分数排序
+        players.sort((p1,p2)-> p2.getScore() - p1.getScore() );
+        int rank = 1;
+        //显示表头
+        g.drawString("排名    玩家       分数", 300, 250); // 显示分数
+        for(MultiPlayer player:players) {
+            g.drawString(rank + "         " + player.getUsername()+"     " + player.getScore(), 300, 250+deltaY); // 显示分数
+
+            deltaY+=30; // 调整下一个玩家分数的显示位置
+            rank++;
+        }
+
+        exportButton = new JButton("导出成绩"); // 导出成绩按钮
+        exportButton.setBounds(325, 100, 100, 50); // 设置按钮位置
+        exportButton.setVisible(false);
+        exportButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {  //
+                exportScores();
+            }
+        });
+        add(exportButton);
+
+        //暂时不支持Restart.
+        //g.drawString("Press R to Restart", 350, 340); // 提示重新开始
+        //g.drawString("Press E to Exit", 350, 360); // 提示可以退出
     }
+
+    /**
+     * 导出玩家成绩到Excel文件。
+     */
+    private void exportScores() {
+        // 获取所有玩家并按成绩降序排序
+        List<MultiPlayer> playersList = new ArrayList<>(players);   // 存储玩家的数组转化为列表
+        playersList.sort(Comparator.comparingInt(MultiPlayer::getScore).reversed());
+
+        // 创建Excel工作簿和表格
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("《星际空战》得分表");
+
+        // 创建表头行
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("用户名");
+        header.createCell(1).setCellValue("得分");
+
+        // 填充玩家数据
+        int rowNum = 1;
+        for (MultiPlayer player : playersList) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(player.getUsername());
+            row.createCell(1).setCellValue(player.getScore());
+        }
+
+        // 定义文件路径
+        String filePath = "C:/GameScores/scores.xlsx";
+        File file = new File(filePath);
+
+        // 创建目录（如果不存在）
+        File parentDir = file.getParentFile();
+        if (!parentDir.exists()) {
+            parentDir.mkdirs(); // 创建目录
+        }
+
+        // 将工作簿写入文件
+        try (FileOutputStream fileOut = new FileOutputStream(file)) {
+            workbook.write(fileOut); // 写入文件
+        } catch (IOException ex) {
+            ex.printStackTrace(); // 异常处理
+        } finally {
+            try {
+                workbook.close(); // 关闭工作簿
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+
 
     /**
      * 绘制游戏中的所有对象，包括敌人、子弹、奖励和分数显示。
      */
-    private void drawGameObjects(Graphics g) {
+    private synchronized void drawGameObjects(Graphics g) {
         // 绘制敌人
         for (Enemy enemy : enemies) {
             enemy.draw(g);
@@ -228,8 +266,13 @@ public class BaseGamePanel extends JPanel implements ActionListener {  //供多�
             reward.draw(g);
         }
         // 绘制分数
-        g.setColor(Color.WHITE); // 设置分数文字颜色
-        g.drawString("Score: " + scoreManager.getScore(), 10, 10); // 显示当前分数
+        int deltaX = 30;
+        g.setColor(Color.RED); // 设置分数文字颜色
+
+        for(MultiPlayer player:players) {
+            g.drawString(player.getUsername()+": " + player.getScore(), deltaX, 30); // 显示当前分数
+            deltaX+=80;  // 调整下一个玩家分数的显示位置
+        }
     }
 
     /**
@@ -237,7 +280,6 @@ public class BaseGamePanel extends JPanel implements ActionListener {  //供多�
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-
         repaint(); // 重新绘制面板
     }
 
@@ -250,30 +292,7 @@ public class BaseGamePanel extends JPanel implements ActionListener {  //供多�
         rewards.removeIf(reward -> !reward.isAlive()); // 移除消失的奖励
     }
 
-    /**
-     * 处理按键事件，包括游戏重启与退出功能。
-     */
-    private class GameKeyAdapter extends KeyAdapter {
-        @Override
-        public void keyPressed(KeyEvent e) {
-            if (isMeAlive()) {
-               //TODO: out key event
-                // player.getKeyAdapter(bullets).keyPressed(e); // 处理玩家按键事件(要输出给服务器)out输出
-            } else if (e.getKeyCode() == KeyEvent.VK_R) {
-                restartGame(); // 处理重新开始游戏
-            } else if (e.getKeyCode() == KeyEvent.VK_E) {
-                exitGame();    // 处理退出游戏
-            }
-        }
 
-        @Override
-        public void keyReleased(KeyEvent e) {
-            if (isMeAlive()) {
-                //TODO: out key event
-                //player.getKeyAdapter(bullets).keyReleased(e); // 处理玩家按键释放事件(要输出给服务器)
-            }
-        }
-    }
     
 
     /**
@@ -294,8 +313,8 @@ public class BaseGamePanel extends JPanel implements ActionListener {  //供多�
      * 启动游戏，包括设置游戏运行标志和重新启动敌人生成计时器。
      */
     public void startGame() {
-        startButton.setVisible(false); // 隐藏开始游戏按钮
         requestFocusInWindow(); // 请求焦点，以便接收键盘事件
+        backgroundMusic.loop(Clip.LOOP_CONTINUOUSLY);// 启动背景音乐(循环)
     }
 
 

@@ -21,13 +21,16 @@ public class MultiplayerDialog extends JDialog {
     private PrintWriter out; // 输出流
     private BufferedReader in; // 输入流
 
+    private JFrame frame;
     /**
      * 构造函数，初始化多人游戏对话框。
      *
      * @param owner 父窗口
      */
     public MultiplayerDialog(JFrame owner) {
-        super(owner, "Multiplayer Mode", true); // 初始化对话框，设置为模态
+        super(owner, "多人模式--房间选择", true); // 初始化对话框，设置为模态
+
+        this.frame = owner;
 
         // 创建内容面板并设置其布局
         JPanel contentPane = new JPanel(new GridBagLayout());
@@ -43,7 +46,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.insets = new Insets(5, 5, 5, 5);
-        serverAddressField = new JTextField("127.0.0.1:8888");
+        serverAddressField = new JTextField("39.106.226.151:8888");
         contentPane.add(serverAddressField, gbc);
 
         // 用户名标签和输入框
@@ -59,6 +62,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.weightx = 1.0;
         gbc.insets = new Insets(5, 5, 5, 5);
         usernameField = new JTextField();
+        usernameField.setText("user1");
         contentPane.add(usernameField, gbc);
 
         // 密码标签和输入框
@@ -74,6 +78,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.weightx = 1.0;
         gbc.insets = new Insets(5, 5, 5, 5);
         passwordField = new JPasswordField();
+        passwordField.setText("123456"); //方便调试
         contentPane.add(passwordField, gbc);
 
         // 房间号标签和输入框
@@ -89,6 +94,7 @@ public class MultiplayerDialog extends JDialog {
         gbc.weightx = 1.0;
         gbc.insets = new Insets(5, 5, 5, 5);
         roomNumberField = new JTextField();
+        roomNumberField.setText("666");
         contentPane.add(roomNumberField, gbc);
 
         // 按钮面板
@@ -108,7 +114,7 @@ public class MultiplayerDialog extends JDialog {
         buttonPanel.add(createButton);
         buttonPanel.add(joinButton);
 
-        setModalExclusionType(Dialog.ModalExclusionType.APPLICATION_EXCLUDE); // 设置对话框模态排斥类型
+        setModalExclusionType(ModalExclusionType.APPLICATION_EXCLUDE); // 设置对话框模态排斥类型
         setDefaultCloseOperation(DISPOSE_ON_CLOSE); // 设置默认关闭操作
 
         setContentPane(contentPane); // 设置内容面板
@@ -144,8 +150,6 @@ public class MultiplayerDialog extends JDialog {
                 }
             }
         });
-
-        setVisible(true); // 显示对话框
     }
 
     /**
@@ -213,7 +217,7 @@ public class MultiplayerDialog extends JDialog {
                 // 处理错误消息
                 String errorMessage = response.substring("ERROR;".length());
                 JOptionPane.showMessageDialog(this, "错误: " + errorMessage, "错误", JOptionPane.ERROR_MESSAGE);
-                return;
+
             } else if ("SUCCESS".equals(response)) {
                 dispose(); // 关闭对话框
                 startGameClient(username); // 启动游戏客户端
@@ -231,7 +235,23 @@ public class MultiplayerDialog extends JDialog {
      * @param username 用户名
      */
     private void startGameClient(String username) {
+        dispose();
+
         // 启动游戏客户端逻辑
         // 例如，可以创建一个新的窗口来显示游戏画面
+        MultiplayerGamePanel panel = new MultiplayerGamePanel(username,socket,in,out);
+        panel.setVisible(true);
+
+
+        frame.getContentPane().removeAll(); // 清除之前的内容
+
+        frame.add(panel); // 添加游戏面板
+
+        frame.setSize(800, 600); // 设置游戏界面尺寸
+        frame.setVisible(true); // 显示游戏界面
+
+        panel.requestFocusInWindow(); // 确保游戏面板获得键盘焦点
+        panel.startGame(); // 启动游戏相关计时器和定时器
+
     }
 }
