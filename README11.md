@@ -1,4 +1,4 @@
 # game
-spaceship-fighting game demo 0.9
+real plane game 1.0
 
 
